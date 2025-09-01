@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"math/rand"
 	"os"
 
@@ -17,30 +18,63 @@ const (
 )
 
 type Universe struct {
-	width     int
-	height    int
-	board     [][]bool
-	nextBoard [][]bool
+	width      int
+	height     int
+	board      [][]bool
+	nextBoard  [][]bool
+	parameters UsageParameters
 }
 
-func newUniverse(width int, height int, population int) *Universe {
+func newUniverse(width int, height int, parameters *UsageParameters) *Universe {
 	universe := new(Universe)
 	universe.board = make([][]bool, width)
 	universe.nextBoard = make([][]bool, width)
 	universe.width = width
 	universe.height = height
+	universe.parameters = *parameters
 
 	for i := range universe.board {
 		universe.board[i] = make([]bool, height)
 		universe.nextBoard[i] = make([]bool, height)
 
+		if *parameters.file != "" {
+			continue
+		}
+
 		for j := range universe.board[i] {
-			universe.board[i][j] = rand.Intn(100) <= population
+			universe.board[i][j] = rand.Intn(100) <= *parameters.population
 			universe.nextBoard[i][j] = false
 		}
 	}
 
+	if *parameters.file != "" {
+		matrix := readFile(parameters.file)
+		embedMatrix(matrix, universe.board)
+	}
+
 	return universe
+}
+
+func embedMatrix(source [][]bool, target [][]bool) {
+
+	targetRows, targetCols := len(target), len(target[0])
+
+	// Check source fits
+	if len(source) > targetRows || len(source[0]) > targetCols {
+		log.Fatal("Source matrix is larger than target matrix")
+		return
+	}
+
+	// Compute offsets to center source
+	rowOffset := (targetRows - len(source)) / 2
+	colOffset := (targetCols - len(source[0])) / 2
+
+	// Copy source into target
+	for r, row := range source {
+		for c, val := range row {
+			target[rowOffset+r][colOffset+c] = val
+		}
+	}
 }
 
 func (u *Universe) printTillResizeComplete(gen int) BoardPrintResult {
@@ -61,7 +95,7 @@ func (u *Universe) printUniverse(gen int) BoardPrintResult {
 		for j := range u.board[i] {
 			var cell rune
 			if u.board[i][j] {
-				cell = 'O'
+				cell = u.parameters.symbol_alive
 				alive++
 			} else {
 				cell = ' '

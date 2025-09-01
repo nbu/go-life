@@ -1,8 +1,6 @@
 package main
 
-import (
-	"life/framework"
-)
+import "life/framework"
 
 func main() {
 

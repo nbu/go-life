@@ -24,7 +24,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 	}()
 
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
-	universe := newUniverse(width, height, *parameters.population)
+	universe := newUniverse(width, height, parameters)
 
 	keyCh := make(chan termbox.Event, 1)
 
@@ -62,7 +62,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 			}
 		}
 
-		if i == *parameters.gens || terminate {
+		if (i == *parameters.gens && *parameters.gens > 0) || terminate {
 			break
 		}
 	}
