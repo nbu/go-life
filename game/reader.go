@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"bufio"
@@ -12,7 +12,12 @@ func readFile(source *string) [][]bool {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(file)
 
 	var matrix [][]bool
 	maxCols := 0

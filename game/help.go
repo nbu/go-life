@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"fmt"
@@ -8,14 +8,15 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const defaultSymbolAlive = 'O'
+const DefaultSymbolAlive = 'O'
 
 type UsageParameters struct {
-	gens         *int
-	population   *int
-	sleep        *time.Duration
-	file         *string
-	symbol_alive rune
+	gens        *int
+	population  *int
+	sleep       *time.Duration
+	file        *string
+	symbolAlive rune
+	boardType   *string
 }
 
 type LifeHelp struct {
@@ -27,7 +28,8 @@ func (lh *LifeHelp) DefineUsage() *UsageParameters {
 	pflag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Game of Life Simulator\n\n")
 		fmt.Fprintf(os.Stderr, "This program simulates Conway's Game of Life on a terminal grid.\n")
-		fmt.Fprintf(os.Stderr, "You can control generations, population density, speed and initial layout file.\n")
+		fmt.Fprintf(os.Stderr, "You can control generations, population density, speed, initial layout file, board type (infinite or boarded).\n")
+		fmt.Fprintf(os.Stderr, "In the ininite board mode you can pan the board with the arrow keys. Also you can use mouse wheel to scroll up and down.\n\n")
 		fmt.Fprintf(os.Stderr, "To end simulation at any time press <ESC>.\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		pflag.PrintDefaults()
@@ -56,17 +58,22 @@ func (lh *LifeHelp) DefineUsage() *UsageParameters {
 			"f",
 			"",
 			"initial layout file")
-	symbol_alive :=
+	symbolAlive :=
 		pflag.StringP("symbol-alive",
 			"a",
-			string(defaultSymbolAlive),
+			string(DefaultSymbolAlive),
 			"symbol to represent alive cell on the board\nunicode character must be provided as $'\\u2591'")
+	usageParameters.boardType =
+		pflag.StringP("board-type",
+			"t",
+			"infinite",
+			"board type to simulate, allowed values are infinite or boarded")
 	pflag.Parse()
 
-	if len(*symbol_alive) > 0 {
-		usageParameters.symbol_alive = []rune(*symbol_alive)[0]
+	if len(*symbolAlive) > 0 {
+		usageParameters.symbolAlive = []rune(*symbolAlive)[0]
 	} else {
-		usageParameters.symbol_alive = defaultSymbolAlive
+		usageParameters.symbolAlive = DefaultSymbolAlive
 	}
 
 	return usageParameters

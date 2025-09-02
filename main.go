@@ -1,10 +1,13 @@
 package main
 
-import "life/framework"
+import (
+	"life/framework"
+	"life/game"
+)
 
 func main() {
 
-	help := new(LifeHelp)
-	gameLoop := new(LifeGameLoop)
+	help := new(game.LifeHelp)
+	gameLoop := new(game.LifeGameLoop)
 	framework.Run(help, gameLoop)
 }
