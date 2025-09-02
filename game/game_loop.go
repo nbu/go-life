@@ -1,11 +1,9 @@
 package game
 
 import (
-	"os"
 	"time"
 
 	"github.com/nsf/termbox-go"
-	"golang.org/x/term"
 )
 
 const speedIncrement = 5 * time.Millisecond
@@ -28,8 +26,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 		}
 	}()
 
-	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
-	universe := NewUniverse(width, height, parameters)
+	universe := NewUniverse(parameters)
 
 	keyCh := make(chan termbox.Event, 1)
 
@@ -68,13 +65,15 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 					if *parameters.sleep < speedIncrement {
 						*parameters.sleep = speedIncrement
 					}
+				} else if ev.Ch == 'r' {
+					universe.ResetOrigin(Coord{0, 0})
 				}
 			}
 		case <-tick.C:
 			PrintTillResizeComplete(universe)
 
-			if *parameters.boardType == "boarded" && universe.AliveCount() == 0 {
-				exitMessage = "No one left alive. Leaving the game."
+			if universe.AliveCount() == 0 {
+				exitMessage = "Extinction of the population"
 				terminate = true
 			} else {
 				universe.NextStep()
@@ -87,6 +86,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 
 		if resetTimer {
 			tick.Reset(*parameters.sleep)
+			resetTimer = false
 		}
 	}
 }

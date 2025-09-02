@@ -9,6 +9,8 @@ type BoardedUniverse struct {
 	parameters UsageParameters
 	aliveCount int
 	generation int
+	origin     Coord
+	bounds     Bounds
 }
 
 func CreateUniverseBoarded(width int, height int, parameters *UsageParameters) *BoardedUniverse {
@@ -19,6 +21,8 @@ func CreateUniverseBoarded(width int, height int, parameters *UsageParameters) *
 	u.width = width
 	u.height = height
 	u.parameters = *parameters
+	u.origin = Coord{0, 0}
+	u.bounds = Bounds{Coord{0, 0}, Coord{width - 1, height - 1}}
 
 	for i := range u.board {
 		u.board[i] = make([]int, height)
@@ -108,4 +112,16 @@ func (u *BoardedUniverse) AliveCount() int {
 
 func (u *BoardedUniverse) Generation() int {
 	return u.generation
+}
+
+func (u *BoardedUniverse) GameBounds() Bounds {
+	return u.bounds
+}
+
+func (u *BoardedUniverse) Origin() Coord {
+	return u.origin
+}
+
+func (u *BoardedUniverse) ResetOrigin(coord Coord) {
+	u.origin = coord
 }
