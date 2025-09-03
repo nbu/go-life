@@ -73,10 +73,11 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 				}
 			}
 		case <-tick.C:
+			PrintTillResizeComplete(universe)
+
 			if pause {
 				continue
 			}
-			PrintTillResizeComplete(universe)
 
 			if universe.AliveCount() == 0 {
 				exitMessage = "Extinction of the population"

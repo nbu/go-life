@@ -58,8 +58,8 @@ func (u *BoardedUniverse) setStats(oldStatus int, aliveInc int) {
 }
 
 func (u *BoardedUniverse) setDeadCount(stats UniverseStats) {
-	width := u.bounds[1][0] - u.bounds[0][0]
-	height := u.bounds[1][1] - u.bounds[0][1]
+	width := u.bounds.BottomRight.X - u.bounds.TopLeft.X
+	height := u.bounds.BottomRight.Y - u.bounds.TopLeft.Y
 	stats.dead += width*height - stats.alive
 }
 
@@ -134,8 +134,8 @@ func (u *BoardedUniverse) IsAlive(i int, j int) int {
 }
 
 func (u *BoardedUniverse) Pan(x int, y int) {
-	u.origin[0] = u.origin[0] + x
-	u.origin[1] = u.origin[1] + y
+	u.origin.X = u.origin.X + x
+	u.origin.Y = u.origin.Y + y
 }
 
 func (u *BoardedUniverse) AliveCount() int {

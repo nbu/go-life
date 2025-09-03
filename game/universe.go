@@ -11,8 +11,14 @@ import (
 )
 
 type BoardPrintResult int
-type Coord [2]int
-type Bounds [2]Coord
+type Coord struct {
+	X int
+	Y int
+}
+type Bounds struct {
+	TopLeft     Coord
+	BottomRight Coord
+}
 
 const (
 	Printed BoardPrintResult = iota
@@ -147,7 +153,7 @@ func drawInfoText(u Universe, height int, width int) {
 		termbox.ColorDefault,
 		termbox.ColorDefault)
 
-	originText := fmt.Sprintf(" Origin: x=%d y=%d", u.Origin()[0], u.Origin()[1])
+	originText := fmt.Sprintf(" Origin: x=%d y=%d", u.Origin().X, u.Origin().Y)
 	drawString(
 		2,
 		0,
@@ -173,7 +179,7 @@ func drawInfoText(u Universe, height int, width int) {
 
 	bounds := u.GameBounds()
 	sizeText := fmt.Sprintf(" Size: width=%d height=%d ",
-		bounds[1][0]-bounds[0][0], bounds[1][1]-bounds[0][1])
+		bounds.BottomRight.X-bounds.TopLeft.X, bounds.BottomRight.Y-bounds.TopLeft.Y)
 	drawString(
 		width-2-len(sizeText),
 		0,
@@ -225,16 +231,16 @@ func drawNavigationArrows(u Universe, height int, width int) {
 
 	bounds := u.GameBounds()
 	origin := u.Origin()
-	if bounds[0][0] < origin[0] {
+	if bounds.TopLeft.X < origin.X {
 		termbox.SetCell(0, height/2, '\u25C0', termbox.ColorDefault, termbox.ColorDefault)
 	}
-	if bounds[1][0] > origin[0]+width-3 {
+	if bounds.BottomRight.X > origin.X+width-3 {
 		termbox.SetCell(width-1, height/2, '\u25B6', termbox.ColorDefault, termbox.ColorDefault)
 	}
-	if bounds[0][1] < origin[1] {
+	if bounds.TopLeft.Y < origin.Y {
 		termbox.SetCell(width/2, 0, '\u25B2', termbox.ColorDefault, termbox.ColorDefault)
 	}
-	if bounds[1][1] > origin[1]+height-3 {
+	if bounds.BottomRight.Y > origin.Y+height-3 {
 		termbox.SetCell(width/2, height-1, '\u25BC', termbox.ColorDefault, termbox.ColorDefault)
 	}
 }

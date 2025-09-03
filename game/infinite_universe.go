@@ -39,7 +39,7 @@ func (u *InfiniteUniverse) NextStep() {
 	u.resetBounds()
 	for c := range u.board {
 		for _, n := range neighbors {
-			neighbor := Coord{c[0] + n[0], c[1] + n[1]}
+			neighbor := Coord{c.X + n.X, c.Y + n.Y}
 			counts[neighbor]++
 		}
 	}
@@ -67,8 +67,8 @@ func (u *InfiniteUniverse) NextStep() {
 }
 
 func (u *InfiniteUniverse) setDeadCount(stats UniverseStats) {
-	width := u.bounds[1][0] - u.bounds[0][0]
-	height := u.bounds[1][1] - u.bounds[0][1]
+	width := u.bounds.BottomRight.X - u.bounds.TopLeft.X
+	height := u.bounds.BottomRight.Y - u.bounds.TopLeft.Y
 	stats.dead += width*height - stats.alive
 }
 
@@ -90,8 +90,8 @@ func (u *InfiniteUniverse) setStats(oldStatus int, aliveInc int) {
 }
 
 func (u *InfiniteUniverse) IsAlive(x int, y int) int {
-	x = x + u.origin[0]
-	y = y + u.origin[1]
+	x = x + u.origin.X
+	y = y + u.origin.Y
 	return u.board[Coord{x, y}]
 }
 
@@ -100,8 +100,8 @@ func (u *InfiniteUniverse) Parameters() UsageParameters {
 }
 
 func (u *InfiniteUniverse) Pan(x int, y int) {
-	u.origin[0] = u.origin[0] + x
-	u.origin[1] = u.origin[1] + y
+	u.origin.X = u.origin.X + x
+	u.origin.Y = u.origin.Y + y
 }
 
 func (u *InfiniteUniverse) AliveCount() int {
@@ -129,20 +129,20 @@ func (u *InfiniteUniverse) Stats() map[int]UniverseStats {
 }
 
 func (u *InfiniteUniverse) setBounds(cell Coord) {
-	if cell[0] < u.bounds[0][0] {
-		u.bounds[0][0] = cell[0]
+	if cell.X < u.bounds.TopLeft.X {
+		u.bounds.TopLeft.X = cell.X
 	}
 
-	if cell[1] < u.bounds[0][1] {
-		u.bounds[0][1] = cell[1]
+	if cell.Y < u.bounds.TopLeft.Y {
+		u.bounds.TopLeft.Y = cell.Y
 	}
 
-	if cell[0] > u.bounds[1][0] {
-		u.bounds[1][0] = cell[0]
+	if cell.X > u.bounds.BottomRight.X {
+		u.bounds.BottomRight.X = cell.X
 	}
 
-	if cell[1] > u.bounds[1][1] {
-		u.bounds[1][1] = cell[1]
+	if cell.Y > u.bounds.BottomRight.Y {
+		u.bounds.BottomRight.Y = cell.Y
 	}
 }
 
