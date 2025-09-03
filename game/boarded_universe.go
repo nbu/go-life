@@ -11,6 +11,7 @@ type BoardedUniverse struct {
 	generation int
 	origin     Coord
 	bounds     Bounds
+	stats      map[int]UniverseStats
 }
 
 func CreateUniverseBoarded(width int, height int, parameters *UsageParameters) *BoardedUniverse {
@@ -23,6 +24,7 @@ func CreateUniverseBoarded(width int, height int, parameters *UsageParameters) *
 	u.parameters = *parameters
 	u.origin = Coord{0, 0}
 	u.bounds = Bounds{Coord{0, 0}, Coord{width - 1, height - 1}}
+	u.stats = make(map[int]UniverseStats)
 
 	for i := range u.board {
 		u.board[i] = make([]int, height)
@@ -38,29 +40,57 @@ func (u *BoardedUniverse) Parameters() UsageParameters {
 
 func (u *BoardedUniverse) SetAliveCell(x int, y int) {
 
+	oldStatus := u.board[x][y]
 	if x >= 0 && x < u.width && y >= 0 && y < u.height {
 		u.board[x][y] = u.board[x][y] + 1
 		u.aliveCount++
 	}
+	u.setStats(oldStatus, 1)
+}
+
+func (u *BoardedUniverse) setStats(oldStatus int, aliveInc int) {
+
+	stats := u.stats[u.generation]
+	stats.alive = stats.alive + aliveInc
+	u.setDeadCount(stats)
+	stats.died += oldStatus
+	u.stats[u.generation] = stats
+}
+
+func (u *BoardedUniverse) setDeadCount(stats UniverseStats) {
+	width := u.bounds[1][0] - u.bounds[0][0]
+	height := u.bounds[1][1] - u.bounds[0][1]
+	stats.dead += width*height - stats.alive
 }
 
 func (u *BoardedUniverse) NextStep() {
 
+	stats := UniverseStats{}
 	aliveCount := 0
+	u.generation++
 	for i := range u.board {
 		for j := range u.board[i] {
-			u.nextBoard[i][j] = u.isAliveOnNextStep(i, j)
+			isAlive := u.isAliveOnNextStep(i, j)
+			if isAlive > 0 && u.board[i][j] == 0 {
+				stats.born++
+			} else if isAlive == 0 && u.board[i][j] > 0 {
+				stats.died++
+			}
+			u.nextBoard[i][j] = isAlive
 			if u.nextBoard[i][j] > 0 {
 				aliveCount++
 			}
 		}
 	}
 
+	stats.alive = u.AliveCount()
+	u.setDeadCount(stats)
+	u.stats[u.generation] = stats
+
 	tmpBoard := u.board
 	u.board = u.nextBoard
 	u.nextBoard = tmpBoard
 	u.aliveCount = aliveCount
-	u.generation++
 }
 
 func (u *BoardedUniverse) isAliveOnNextStep(i int, j int) int {
@@ -103,7 +133,9 @@ func (u *BoardedUniverse) IsAlive(i int, j int) int {
 	return u.isAlive(i, j, false)
 }
 
-func (u *BoardedUniverse) Pan(_ int, _ int) {
+func (u *BoardedUniverse) Pan(x int, y int) {
+	u.origin[0] = u.origin[0] + x
+	u.origin[1] = u.origin[1] + y
 }
 
 func (u *BoardedUniverse) AliveCount() int {
@@ -124,4 +156,8 @@ func (u *BoardedUniverse) Origin() Coord {
 
 func (u *BoardedUniverse) ResetOrigin(coord Coord) {
 	u.origin = coord
+}
+
+func (u *BoardedUniverse) Stats() map[int]UniverseStats {
+	return u.stats
 }

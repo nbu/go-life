@@ -29,7 +29,8 @@ func (lh *LifeHelp) DefineUsage() *UsageParameters {
 		fmt.Fprintf(os.Stderr, "Game of Life Simulator\n\n")
 		fmt.Fprintf(os.Stderr, "This program simulates Conway's Game of Life on a terminal grid.\n")
 		fmt.Fprintf(os.Stderr, "You can control generations, population density, speed, initial layout file, board type (infinite or boarded).\n")
-		fmt.Fprintf(os.Stderr, "In the ininite board mode you can pan the board with the arrow keys. Also you can use mouse wheel to scroll up and down.\n\n")
+		fmt.Fprintf(os.Stderr, "In the ininite board mode you can pan the board with the arrow keys. Also you can use mouse wheel to scroll up and down. To reset origin back pres 'r'.\n\n")
+		fmt.Fprintf(os.Stderr, "To pause simulation press <SPACE>.\n\n")
 		fmt.Fprintf(os.Stderr, "To end simulation at any time press <ESC>.\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		pflag.PrintDefaults()
@@ -40,13 +41,13 @@ func (lh *LifeHelp) DefineUsage() *UsageParameters {
 			"gens",
 			"g",
 			1000,
-			"number of generations, 0 means infinite number of generations")
+			"number of generations to run simulation, 0 means infinite number of generations")
 	usageParameters.population =
 		pflag.IntP(
 			"population",
 			"p",
 			20,
-			"percentage of the random population\nif initial layout file is provided this parameter is ignored\n")
+			"population density\nif initial layout file is provided this parameter is ignored\n")
 	usageParameters.sleep =
 		pflag.DurationP(
 			"sleep",
@@ -62,7 +63,7 @@ func (lh *LifeHelp) DefineUsage() *UsageParameters {
 		pflag.StringP("symbol-alive",
 			"a",
 			string(DefaultSymbolAlive),
-			"symbol to represent alive cell on the board\nunicode character must be provided as $'\\u2591'")
+			"symbol to represent alive cell on the board\nunicode character can be provided as $'\\u2591'")
 	usageParameters.boardType =
 		pflag.StringP("board-type",
 			"t",

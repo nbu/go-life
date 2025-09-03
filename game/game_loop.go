@@ -6,7 +6,7 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
-const speedIncrement = 5 * time.Millisecond
+const SpeedIncrement = 5 * time.Millisecond
 
 type LifeGameLoop struct {
 }
@@ -42,6 +42,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 	defer tick.Stop()
 	terminate := false
 	resetTimer := false
+	pause := false
 	for {
 		select {
 		case ev := <-keyCh:
@@ -57,19 +58,24 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 				} else if ev.Key == termbox.KeyArrowDown {
 					universe.Pan(0, 1)
 				} else if ev.Ch == '-' {
-					*parameters.sleep = *parameters.sleep + speedIncrement
+					*parameters.sleep = *parameters.sleep + SpeedIncrement
 					resetTimer = true
 				} else if ev.Ch == '+' {
-					*parameters.sleep = *parameters.sleep - speedIncrement
+					*parameters.sleep = *parameters.sleep - SpeedIncrement
 					resetTimer = true
-					if *parameters.sleep < speedIncrement {
-						*parameters.sleep = speedIncrement
+					if *parameters.sleep < SpeedIncrement {
+						*parameters.sleep = SpeedIncrement
 					}
 				} else if ev.Ch == 'r' {
 					universe.ResetOrigin(Coord{0, 0})
+				} else if ev.Key == termbox.KeySpace {
+					pause = !pause
 				}
 			}
 		case <-tick.C:
+			if pause {
+				continue
+			}
 			PrintTillResizeComplete(universe)
 
 			if universe.AliveCount() == 0 {

@@ -24,15 +24,18 @@ func readFile(source *string) [][]bool {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
+		if len(line) > 0 && line[0] == '!' {
+			continue
+		}
 		cols := len(line)
 		if cols > maxCols {
 			maxCols = cols
 		}
 		row := make([]bool, cols)
 		for i, ch := range line {
-			if ch == 'x' {
+			if ch == 'O' {
 				row[i] = true
-			} else {
+			} else if ch == '.' {
 				row[i] = false
 			}
 		}

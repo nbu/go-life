@@ -19,6 +19,13 @@ const (
 	BoardResized
 )
 
+type UniverseStats struct {
+	alive int
+	born  int
+	dead  int
+	died  int
+}
+
 type Universe interface {
 	SetAliveCell(x int, y int)
 	IsAlive(x int, y int) int
@@ -31,6 +38,7 @@ type Universe interface {
 	GameBounds() Bounds
 	Origin() Coord
 	ResetOrigin(coord Coord)
+	Stats() map[int]UniverseStats
 }
 
 func NewUniverse(parameters *UsageParameters) Universe {
@@ -72,7 +80,7 @@ func NewUniverse(parameters *UsageParameters) Universe {
 func embedMatrix(source [][]bool, screenWidth int, screenHeight int, u Universe) {
 
 	// Check source fits
-	if len(source) > screenWidth || len(source[0]) > screenHeight {
+	if len(source) > screenWidth || len(source[0]) > screenHeight && *u.Parameters().boardType == "boarded" {
 		log.Fatal("Source matrix is larger than target matrix")
 		return
 	}
@@ -80,7 +88,6 @@ func embedMatrix(source [][]bool, screenWidth int, screenHeight int, u Universe)
 	colOffset := (screenWidth - len(source)) / 2
 	rowOffset := (screenHeight - len(source[0])) / 2
 
-	// Copy source into target
 	for r, row := range source {
 		for c, val := range row {
 			if val {
@@ -105,60 +112,33 @@ func printUniverse(u Universe) BoardPrintResult {
 		panic(err)
 	}
 
-	var alive int
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
 
-	for i := range width {
-		termbox.SetCell(i, 0, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
-		termbox.SetCell(i, height-1, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
+	drawBorder(width, height)
+	drawCells(u, width, height)
+	drawNavigationArrows(u, height, width)
+	drawInfoText(u, height, width)
+
+	result := Printed
+
+	newWidth, newHeight, _ := term.GetSize(int(os.Stdout.Fd()))
+	if newWidth != width || newHeight != height {
+		result = BoardResized
+	} else {
+		result = Printed
 	}
 
-	for i := range height {
-		termbox.SetCell(0, i, '\u2502', termbox.ColorDefault, termbox.ColorDefault)
-		termbox.SetCell(width-1, i, '\u2502', termbox.ColorDefault, termbox.ColorDefault)
-	}
-	termbox.SetCell(0, 0, '\u250C', termbox.ColorDefault, termbox.ColorDefault)
-	termbox.SetCell(width-1, 0, '\u2510', termbox.ColorDefault, termbox.ColorDefault)
-	termbox.SetCell(0, height-1, '\u2514', termbox.ColorDefault, termbox.ColorDefault)
-	termbox.SetCell(width-1, height-1, '\u2518', termbox.ColorDefault, termbox.ColorDefault)
-
-	for i := range width - 2 {
-		for j := range height - 2 {
-			var cell rune
-			isAlive := u.IsAlive(i, j)
-			if isAlive > 0 {
-				cell = u.Parameters().symbolAlive
-				alive++
-			} else {
-				cell = ' '
-			}
-
-			var fgColor termbox.Attribute
-
-			if isAlive > 1 {
-				fgColor = termbox.ColorDarkGray
-			} else {
-				fgColor = termbox.ColorGreen
-			}
-			termbox.SetCell(i+1, j+1, cell, fgColor, termbox.ColorDefault)
+	if result != BoardResized {
+		err := termbox.Flush()
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	bounds := u.GameBounds()
-	origin := u.Origin()
-	if bounds[0][0] < origin[0] {
-		termbox.SetCell(0, height/2, '\u25C0', termbox.ColorDefault, termbox.ColorDefault)
-	}
-	if bounds[1][0] > origin[0]+width-3 {
-		termbox.SetCell(width-1, height/2, '\u25B6', termbox.ColorDefault, termbox.ColorDefault)
-	}
-	if bounds[0][1] < origin[1] {
-		termbox.SetCell(width/2, 0, '\u25B2', termbox.ColorDefault, termbox.ColorDefault)
-	}
-	if bounds[1][1] > origin[1]+height-3 {
-		termbox.SetCell(width/2, height-1, '\u25BC', termbox.ColorDefault, termbox.ColorDefault)
-	}
+	return result
+}
 
+func drawInfoText(u Universe, height int, width int) {
 	generationsText := fmt.Sprintf(" Generation: %d ", u.Generation())
 	drawString(
 		2,
@@ -174,23 +154,89 @@ func printUniverse(u Universe) BoardPrintResult {
 		originText,
 		termbox.ColorDefault,
 		termbox.ColorDefault)
-	newWidth, newHeight, _ := term.GetSize(int(os.Stdout.Fd()))
 
-	result := Printed
-	if newWidth != width || newHeight != height {
-		result = BoardResized
-	} else {
-		result = Printed
+	stats := u.Stats()
+	genStats := stats[u.Generation()]
+	trend := 0.0
+	if genStats.died > 0 {
+		trend = float64(genStats.born) / float64(genStats.died)
 	}
 
-	if result != BoardResized {
-		err := termbox.Flush()
-		if err != nil {
-			panic(err)
+	statsText := fmt.Sprintf(" Born: %d; Died: %d; Born/Died: %f ",
+		genStats.born, genStats.died, trend)
+	drawString(
+		width-2-len(statsText),
+		height-1,
+		statsText,
+		termbox.ColorDefault,
+		termbox.ColorDefault)
+
+	bounds := u.GameBounds()
+	sizeText := fmt.Sprintf(" Size: width=%d height=%d ",
+		bounds[1][0]-bounds[0][0], bounds[1][1]-bounds[0][1])
+	drawString(
+		width-2-len(sizeText),
+		0,
+		sizeText,
+		termbox.ColorDefault,
+		termbox.ColorDefault)
+}
+
+func drawCells(u Universe, width int, height int) {
+	for i := range width - 2 {
+		for j := range height - 2 {
+			var cell rune
+			isAlive := u.IsAlive(i, j)
+			if isAlive > 0 {
+				cell = u.Parameters().symbolAlive
+			} else {
+				cell = ' '
+			}
+
+			var fgColor termbox.Attribute
+
+			if isAlive > 1 {
+				fgColor = termbox.ColorDarkGray
+			} else {
+				fgColor = termbox.ColorGreen
+			}
+			termbox.SetCell(i+1, j+1, cell, fgColor, termbox.ColorDefault)
 		}
 	}
+}
 
-	return result
+func drawBorder(width int, height int) {
+	for i := range width {
+		termbox.SetCell(i, 0, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
+		termbox.SetCell(i, height-1, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
+	}
+
+	for i := range height {
+		termbox.SetCell(0, i, '\u2502', termbox.ColorDefault, termbox.ColorDefault)
+		termbox.SetCell(width-1, i, '\u2502', termbox.ColorDefault, termbox.ColorDefault)
+	}
+	termbox.SetCell(0, 0, '\u250C', termbox.ColorDefault, termbox.ColorDefault)
+	termbox.SetCell(width-1, 0, '\u2510', termbox.ColorDefault, termbox.ColorDefault)
+	termbox.SetCell(0, height-1, '\u2514', termbox.ColorDefault, termbox.ColorDefault)
+	termbox.SetCell(width-1, height-1, '\u2518', termbox.ColorDefault, termbox.ColorDefault)
+}
+
+func drawNavigationArrows(u Universe, height int, width int) {
+
+	bounds := u.GameBounds()
+	origin := u.Origin()
+	if bounds[0][0] < origin[0] {
+		termbox.SetCell(0, height/2, '\u25C0', termbox.ColorDefault, termbox.ColorDefault)
+	}
+	if bounds[1][0] > origin[0]+width-3 {
+		termbox.SetCell(width-1, height/2, '\u25B6', termbox.ColorDefault, termbox.ColorDefault)
+	}
+	if bounds[0][1] < origin[1] {
+		termbox.SetCell(width/2, 0, '\u25B2', termbox.ColorDefault, termbox.ColorDefault)
+	}
+	if bounds[1][1] > origin[1]+height-3 {
+		termbox.SetCell(width/2, height-1, '\u25BC', termbox.ColorDefault, termbox.ColorDefault)
+	}
 }
 
 func drawString(x, y int, s string, fg, bg termbox.Attribute) {
