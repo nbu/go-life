@@ -1,6 +1,6 @@
 module life
 
-go 1.23.0
+go 1.23
 
 require (
 	github.com/nsf/termbox-go v1.1.1
