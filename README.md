@@ -19,3 +19,8 @@ Supports both **bounded boards** and **sparse infinite boards**.
     - Generation count
     - Alive cells
     - Born / Died cells per tick
+
+## Demo
+<video src="doc/go-life.mp4" controls>
+  Your browser does not support the video tag.
+</video>
