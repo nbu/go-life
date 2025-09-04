@@ -9,7 +9,6 @@ type BoardedUniverse struct {
 	parameters UsageParameters
 	aliveCount int
 	generation int
-	origin     Coord
 	bounds     Bounds
 	stats      map[int]UniverseStats
 }
@@ -22,7 +21,6 @@ func CreateUniverseBoarded(width int, height int, parameters *UsageParameters) *
 	u.width = width
 	u.height = height
 	u.parameters = *parameters
-	u.origin = Coord{0, 0}
 	u.bounds = Bounds{Coord{0, 0}, Coord{width - 1, height - 1}}
 	u.stats = make(map[int]UniverseStats)
 
@@ -130,14 +128,7 @@ func (u *BoardedUniverse) isAlive(i int, j int, wrapEdges bool) int {
 
 func (u *BoardedUniverse) IsAlive(x int, y int) int {
 
-	x = x + u.origin.X
-	y = y + u.origin.Y
 	return u.isAlive(x, y, false)
-}
-
-func (u *BoardedUniverse) Pan(x int, y int) {
-	u.origin.X = u.origin.X + x
-	u.origin.Y = u.origin.Y + y
 }
 
 func (u *BoardedUniverse) AliveCount() int {
@@ -150,14 +141,6 @@ func (u *BoardedUniverse) Generation() int {
 
 func (u *BoardedUniverse) GameBounds() Bounds {
 	return u.bounds
-}
-
-func (u *BoardedUniverse) Origin() Coord {
-	return u.origin
-}
-
-func (u *BoardedUniverse) ResetOrigin(coord Coord) {
-	u.origin = coord
 }
 
 func (u *BoardedUniverse) Stats() map[int]UniverseStats {

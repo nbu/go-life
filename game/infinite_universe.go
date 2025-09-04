@@ -9,7 +9,6 @@ type InfiniteUniverse struct {
 	board      map[Coord]int
 	parameters UsageParameters
 	generation int
-	origin     Coord
 	bounds     Bounds
 	stats      map[int]UniverseStats
 }
@@ -24,7 +23,6 @@ func CreateUniverseInfinite(parameters *UsageParameters) *InfiniteUniverse {
 	u := new(InfiniteUniverse)
 	u.board = make(map[Coord]int)
 	u.parameters = *parameters
-	u.origin = Coord{0, 0}
 	u.resetBounds()
 	u.stats = make(map[int]UniverseStats)
 
@@ -90,18 +88,11 @@ func (u *InfiniteUniverse) setStats(oldStatus int, aliveInc int) {
 }
 
 func (u *InfiniteUniverse) IsAlive(x int, y int) int {
-	x = x + u.origin.X
-	y = y + u.origin.Y
 	return u.board[Coord{x, y}]
 }
 
 func (u *InfiniteUniverse) Parameters() UsageParameters {
 	return u.parameters
-}
-
-func (u *InfiniteUniverse) Pan(x int, y int) {
-	u.origin.X = u.origin.X + x
-	u.origin.Y = u.origin.Y + y
 }
 
 func (u *InfiniteUniverse) AliveCount() int {
@@ -114,14 +105,6 @@ func (u *InfiniteUniverse) Generation() int {
 
 func (u *InfiniteUniverse) GameBounds() Bounds {
 	return u.bounds
-}
-
-func (u *InfiniteUniverse) Origin() Coord {
-	return u.origin
-}
-
-func (u *InfiniteUniverse) ResetOrigin(coord Coord) {
-	u.origin = coord
 }
 
 func (u *InfiniteUniverse) Stats() map[int]UniverseStats {

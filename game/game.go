@@ -37,17 +37,18 @@ type Universe interface {
 	IsAlive(x int, y int) int
 	Parameters() UsageParameters
 	NextStep()
-	// Pan TODO Borys: Pan function doesn't belong to the game, it's a representation not a game logic
-	Pan(x int, y int)
 	AliveCount() int
 	Generation() int
 	GameBounds() Bounds
-	Origin() Coord
-	ResetOrigin(coord Coord)
 	Stats() map[int]UniverseStats
 }
 
-func NewUniverse(parameters *UsageParameters) Universe {
+type Game struct {
+	Universe Universe
+	Origin   Coord
+}
+
+func NewGame(parameters *UsageParameters) Game {
 
 	var u Universe
 	screenWidth, screenHeight, _ := term.GetSize(int(os.Stdout.Fd()))
@@ -75,18 +76,22 @@ func NewUniverse(parameters *UsageParameters) Universe {
 		}
 	}
 
-	if *parameters.file != "" {
-		matrix := readFile(parameters.file)
-		embedMatrix(matrix, screenWidth, screenHeight, u)
+	game := Game{
+		Universe: u,
+		Origin:   Coord{0, 0},
 	}
 
-	return u
+	if *parameters.file != "" {
+		matrix := readFile(parameters.file)
+		game.embedMatrix(matrix, screenWidth, screenHeight)
+	}
+
+	return game
 }
 
-func embedMatrix(source [][]bool, screenWidth int, screenHeight int, u Universe) {
+func (game *Game) embedMatrix(source [][]bool, screenWidth int, screenHeight int) {
 
-	// Check source fits
-	if len(source) > screenWidth || len(source[0]) > screenHeight && *u.Parameters().boardType == "boarded" {
+	if len(source) > screenWidth || len(source[0]) > screenHeight && *game.Universe.Parameters().boardType == "boarded" {
 		log.Fatal("Source matrix is larger than target matrix")
 		return
 	}
@@ -97,22 +102,31 @@ func embedMatrix(source [][]bool, screenWidth int, screenHeight int, u Universe)
 	for r, row := range source {
 		for c, val := range row {
 			if val {
-				u.SetAliveCell(colOffset+r, rowOffset+c)
+				game.Universe.SetAliveCell(colOffset+r, rowOffset+c)
 			}
 		}
 	}
 }
 
-func PrintTillResizeComplete(u Universe) {
+func (game *Game) Pan(x int, y int) {
+	game.Origin.X = game.Origin.X + x
+	game.Origin.Y = game.Origin.Y + y
+}
+
+func (game *Game) ResetOrigin(coord Coord) {
+	game.Origin = coord
+}
+
+func (game *Game) PrintTillResizeComplete() {
 	for {
-		result := printUniverse(u)
+		result := game.printUniverse()
 		if result != BoardResized {
 			return
 		}
 	}
 }
 
-func printUniverse(u Universe) BoardPrintResult {
+func (game *Game) printUniverse() BoardPrintResult {
 	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	if err != nil {
 		panic(err)
@@ -120,10 +134,10 @@ func printUniverse(u Universe) BoardPrintResult {
 
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
 
-	drawBorder(width, height)
-	drawCells(u, width, height)
-	drawNavigationArrows(u, height, width)
-	drawInfoText(u, height, width)
+	game.drawBorder(width, height)
+	game.drawCells(width, height)
+	game.drawNavigationArrows(height, width)
+	game.drawInfoText(height, width)
 
 	result := Printed
 
@@ -144,7 +158,9 @@ func printUniverse(u Universe) BoardPrintResult {
 	return result
 }
 
-func drawInfoText(u Universe, height int, width int) {
+func (game *Game) drawInfoText(height int, width int) {
+	u := game.Universe
+
 	stats := u.Stats()
 	genStats := stats[u.Generation()]
 
@@ -158,7 +174,7 @@ func drawInfoText(u Universe, height int, width int) {
 		termbox.ColorDefault,
 		termbox.ColorDefault)
 
-	originText := fmt.Sprintf(" Origin: x=%d y=%d", u.Origin().X, u.Origin().Y)
+	originText := fmt.Sprintf(" Origin: x=%d y=%d", game.Origin.X, game.Origin.Y)
 	drawString(
 		2,
 		0,
@@ -191,11 +207,13 @@ func drawInfoText(u Universe, height int, width int) {
 		termbox.ColorDefault)
 }
 
-func drawCells(u Universe, width int, height int) {
+func (game *Game) drawCells(width int, height int) {
+	u := game.Universe
+
 	for i := range width - 2 {
 		for j := range height - 2 {
 			var cell rune
-			isAlive := u.IsAlive(i, j)
+			isAlive := u.IsAlive(i+game.Origin.X, j+game.Origin.Y)
 			if isAlive > 0 {
 				cell = u.Parameters().symbolAlive
 			} else {
@@ -214,7 +232,7 @@ func drawCells(u Universe, width int, height int) {
 	}
 }
 
-func drawBorder(width int, height int) {
+func (game *Game) drawBorder(width int, height int) {
 	for i := range width {
 		termbox.SetCell(i, 0, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
 		termbox.SetCell(i, height-1, '\u2500', termbox.ColorDefault, termbox.ColorDefault)
@@ -230,10 +248,12 @@ func drawBorder(width int, height int) {
 	termbox.SetCell(width-1, height-1, '\u2518', termbox.ColorDefault, termbox.ColorDefault)
 }
 
-func drawNavigationArrows(u Universe, height int, width int) {
+func (game *Game) drawNavigationArrows(height int, width int) {
+
+	u := game.Universe
 
 	bounds := u.GameBounds()
-	origin := u.Origin()
+	origin := game.Origin
 	if bounds.TopLeft.X < origin.X {
 		termbox.SetCell(0, height/2, '\u25C0', termbox.ColorDefault, termbox.ColorDefault)
 	}

@@ -26,7 +26,7 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 		}
 	}()
 
-	universe := NewUniverse(parameters)
+	game := NewGame(parameters)
 
 	keyCh := make(chan termbox.Event, 1)
 
@@ -50,13 +50,13 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 				if ev.Key == termbox.KeyEsc {
 					return
 				} else if ev.Key == termbox.KeyArrowLeft {
-					universe.Pan(-1, 0)
+					game.Pan(-1, 0)
 				} else if ev.Key == termbox.KeyArrowRight {
-					universe.Pan(1, 0)
+					game.Pan(1, 0)
 				} else if ev.Key == termbox.KeyArrowUp {
-					universe.Pan(0, -1)
+					game.Pan(0, -1)
 				} else if ev.Key == termbox.KeyArrowDown {
-					universe.Pan(0, 1)
+					game.Pan(0, 1)
 				} else if ev.Ch == '-' {
 					*parameters.sleep = *parameters.sleep + SpeedIncrement
 					resetTimer = true
@@ -67,27 +67,27 @@ func (lh *LifeGameLoop) Start(parameters *UsageParameters) {
 						*parameters.sleep = SpeedIncrement
 					}
 				} else if ev.Ch == 'r' {
-					universe.ResetOrigin(Coord{0, 0})
+					game.ResetOrigin(Coord{0, 0})
 				} else if ev.Key == termbox.KeySpace {
 					pause = !pause
 				}
 			}
 		case <-tick.C:
-			PrintTillResizeComplete(universe)
+			game.PrintTillResizeComplete()
 
 			if pause {
 				continue
 			}
 
-			if universe.AliveCount() == 0 {
+			if game.Universe.AliveCount() == 0 {
 				exitMessage = "Extinction of the population"
 				terminate = true
 			} else {
-				universe.NextStep()
+				game.Universe.NextStep()
 			}
 		}
 
-		if (universe.Generation() == *parameters.gens && *parameters.gens > 0) || terminate {
+		if (game.Universe.Generation() == *parameters.gens && *parameters.gens > 0) || terminate {
 			break
 		}
 
