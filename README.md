@@ -1,12 +1,12 @@
 # Go Game of Life
 
 A fast and scalable implementation of Conway’s Game of Life in Go running in the terminal.  
-Supports both **bounded boards** and **sparse infinite boards**.
+Supports both **boarded boards** and **sparse infinite boards**.
 
 ## Features
 
 - Infinite board mode (sparse storage, scales to very large grids).
-- Bounded board mode with fixed width/height determined by the widht and height of the terminal.
+- Boarded board mode with fixed width/height determined by the widht and height of the terminal.
 - Terminal rendering (via [termbox-go](https://github.com/nsf/termbox-go)).
 - Keyboard controls for pausing and adjusting speed.
   - pause: \<SPACE\>
