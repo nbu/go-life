@@ -20,5 +20,25 @@ Supports both **bounded boards** and **sparse infinite boards**.
     - Alive cells
     - Born / Died cells per tick
 
+## Run
+
+Clone repo:
+```shell
+git clone https://github.com/nbu/go-life.git
+```
+
+Run code:
+```shell
+cd go-life
+# Get usage info
+go run . --help
+
+# Run simulation for 100 generation on the infinite board with 50ms step interval using objects/spaceship/canadagrey.cells initial layout file
+go run . -s 50ms -g 100 -t infinite -f objects/spaceship/canadagrey.cells
+
+# Run random board for 1000 generations with 100% population on the infinite board with 10ms step interval
+go run . s -p 100 -s 10ms -g 1000 -t infinite
+```
+
 ## Demo
 ![Demo](./doc/go-life.gif)
