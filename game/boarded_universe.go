@@ -128,9 +128,11 @@ func (u *BoardedUniverse) isAlive(i int, j int, wrapEdges bool) int {
 	return u.board[i%u.width][j%u.height]
 }
 
-func (u *BoardedUniverse) IsAlive(i int, j int) int {
+func (u *BoardedUniverse) IsAlive(x int, y int) int {
 
-	return u.isAlive(i, j, false)
+	x = x + u.origin.X
+	y = y + u.origin.Y
+	return u.isAlive(x, y, false)
 }
 
 func (u *BoardedUniverse) Pan(x int, y int) {

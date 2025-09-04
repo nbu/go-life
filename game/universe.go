@@ -145,7 +145,12 @@ func printUniverse(u Universe) BoardPrintResult {
 }
 
 func drawInfoText(u Universe, height int, width int) {
-	generationsText := fmt.Sprintf(" Generation: %d ", u.Generation())
+	stats := u.Stats()
+	genStats := stats[u.Generation()]
+
+	generationsText := fmt.Sprintf(" Generation: %d; Population: %d ",
+		u.Generation(),
+		genStats.alive)
 	drawString(
 		2,
 		height-1,
@@ -161,8 +166,6 @@ func drawInfoText(u Universe, height int, width int) {
 		termbox.ColorDefault,
 		termbox.ColorDefault)
 
-	stats := u.Stats()
-	genStats := stats[u.Generation()]
 	trend := 0.0
 	if genStats.died > 0 {
 		trend = float64(genStats.born) / float64(genStats.died)
