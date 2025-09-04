@@ -21,6 +21,4 @@ Supports both **bounded boards** and **sparse infinite boards**.
     - Born / Died cells per tick
 
 ## Demo
-<video src="./doc/go-life.mp4" controls>
-  Your browser does not support the video tag.
-</video>
+![Demo](./doc/go-life.gif)
