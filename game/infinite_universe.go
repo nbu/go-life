@@ -21,6 +21,7 @@ package game
 
 import (
 	"math"
+	"sync"
 )
 
 type InfiniteUniverse struct {
@@ -30,6 +31,8 @@ type InfiniteUniverse struct {
 	generation int
 	bounds     Bounds
 	stats      map[int]UniverseStats
+	boardPool  sync.Pool
+	countsPool sync.Pool
 }
 
 var neighbors = [8]Coord{
@@ -45,12 +48,33 @@ func CreateUniverseInfinite(parameters *UsageParameters) *InfiniteUniverse {
 	u.resetBounds()
 	u.stats = make(map[int]UniverseStats)
 
+	// Initialize the pools with New functions
+	u.boardPool = sync.Pool{
+		New: func() interface{} {
+			return make(map[Coord]int)
+		},
+	}
+	u.countsPool = sync.Pool{
+		New: func() interface{} {
+			return make(map[Coord]int)
+		},
+	}
+
 	return u
 }
 
 func (u *InfiniteUniverse) NextStep() {
-	newBoard := make(map[Coord]int)
-	counts := make(map[Coord]int)
+	newBoard := u.boardPool.Get().(map[Coord]int)
+	counts := u.countsPool.Get().(map[Coord]int)
+
+	// Clear the maps before using them
+	for k := range newBoard {
+		delete(newBoard, k)
+	}
+	for k := range counts {
+		delete(counts, k)
+	}
+
 	u.generation++
 
 	u.resetBounds()
@@ -80,6 +104,10 @@ func (u *InfiniteUniverse) NextStep() {
 	u.setDeadCount(stats)
 	u.stats[u.generation] = stats
 
+	// Return the old board to pool before assigning new one
+	u.boardPool.Put(u.board)
+	u.countsPool.Put(counts)
+
 	u.board = newBoard
 }
 
@@ -92,7 +120,9 @@ func (u *InfiniteUniverse) setDeadCount(stats UniverseStats) {
 func (u *InfiniteUniverse) SetAliveCell(x int, y int) {
 	oldStatus := u.IsAlive(x, y)
 	coord := Coord{x, y}
-	u.board[coord] = u.board[coord] + 1
+	if u.board[coord] == 0 {
+		u.board[coord] = 1
+	}
 	u.setBounds(coord)
 	u.setStats(oldStatus, 1)
 }

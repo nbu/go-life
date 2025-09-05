@@ -59,8 +59,10 @@ func (u *BoardedUniverse) SetAliveCell(x int, y int) {
 
 	oldStatus := u.board[x][y]
 	if x >= 0 && x < u.width && y >= 0 && y < u.height {
-		u.board[x][y] = u.board[x][y] + 1
-		u.aliveCount++
+		if u.board[x][y] == 0 {
+			u.board[x][y] = 1
+			u.aliveCount++
+		}
 	}
 	u.setStats(oldStatus, 1)
 }
@@ -87,7 +89,7 @@ func (u *BoardedUniverse) NextStep() {
 	u.generation++
 	for i := range u.board {
 		for j := range u.board[i] {
-			isAlive := u.isAliveOnNextStep(i, j)
+			isAlive := u.aliveGenerationsOnNextStep(i, j)
 			if isAlive > 0 && u.board[i][j] == 0 {
 				stats.born++
 			} else if isAlive == 0 && u.board[i][j] > 0 {
@@ -110,7 +112,7 @@ func (u *BoardedUniverse) NextStep() {
 	u.aliveCount = aliveCount
 }
 
-func (u *BoardedUniverse) isAliveOnNextStep(i int, j int) int {
+func (u *BoardedUniverse) aliveGenerationsOnNextStep(i int, j int) int {
 
 	cnt := u.aliveNeighbours(i, j)
 	if cnt == 3 || (cnt == 2 && u.board[i][j] > 0) {
